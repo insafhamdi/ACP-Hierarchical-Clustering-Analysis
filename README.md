@@ -1,4 +1,4 @@
-# ACP-Hierarchical-Clustering-Analysis
+# PCA-Hierarchical-Clustering-Analysis
 # Questionnaire Analysis: PCA and Hierarchical Clustering
 This project focuses on the analysis of questionnaire data using statistical techniques, including Principal Component Analysis (PCA) and Hierarchical Clustering Analysis (HCA). The aim is to gain insights, identify patterns, and perform clustering based on the collected questionnaire responses.
 

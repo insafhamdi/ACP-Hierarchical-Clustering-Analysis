@@ -1,0 +1,309 @@
+---
+title: "Consommation d'eau"
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
+  word_document: default
+date: "2023-04-13"
+---
+# Introduction
+
+L'analyse des données est une étape cruciale dans tout projet de recherche. Dans le domaine de l'environnement, il est important de comprendre les habitudes de consommation d'eau des individus et leur impact sur l'écologie. Dans ce contexte, l'utilisation de techniques statistiques telles que l'Analyse en Composantes Principales (ACP), la Classification Ascendante Hiérarchique (CAH) et l'Analyse en Composantes Factorielles (ACF) est d'une grande importance pour analyser les données collectées à partir d'un questionnaire. Ce rapport vise à présenter les résultats de l'application de ces techniques sur un questionnaire portant sur la consommation de l'eau et l'écologie, afin de mieux comprendre les comportements des individus en matière de consommation d'eau et leur impact sur l'environnement.
+
+# Un coup d’œil sur les statistiques
+
+```{r}
+library(dplyr)
+library(tidyverse)
+library(ggplot2)
+library(readr)
+library(readxl)
+df<- read_excel("C:/Users/hamdi/Downloads/base de données questionnaire.xlsx")
+```
+
+```{r}
+library(dplyr)
+library(ggplot2)
+c<-df %>% count(region)
+domaine<-c$region[order(c$n,decreasing = TRUE)]
+occurence<-c$n[order(c$n,decreasing = TRUE)]
+pct<-round(occurence/sum(occurence)*100)
+lbs<-paste(domaine,pct)
+lbs<-paste(lbs,"%",sep="")
+
+pie(occurence,labels = lbs, col=rainbow(length(lbs)),
+    main="Répartition selon les regions")
+
+```
+```{r}
+# Affichage de la répartition des âges
+hist(df$age, main = "Répartition des âges", xlab = "Âge", ylab = "Fréquence")
+
+```
+```{r}
+
+# Affichage de la répartition du statut professionnel actuel
+table(df$spa)
+```
+```{r}
+# Calcul de la répartition du statut professionnel actuel en pourcentage
+prop <- prop.table(table(df$spa)) * 100
+
+# Création du graphique camembert
+pie(prop, labels = paste(names(prop), " (", round(prop, 1), "%)", sep = ""), main = "Répartition du statut professionnel actuel", col = rainbow(length(prop)))
+
+```
+```{r}
+library(ggplot2) # Chargement de la bibliothèque "ggplot2" pour créer le graphique
+
+# Calcul de la répartition de la variable "ipe"
+prop <- prop.table(table(df$ipe)) * 100
+
+# Création du graphique en barres avec pourcentages dans les barres et couleurs personnalisées
+ggplot(data = df, aes(x = factor(ipe))) + 
+  geom_bar(aes(y = (..count..)/sum(..count..), fill = factor(ipe)), stat="count") +
+  scale_fill_manual(values = c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2")) +
+  ggtitle("Niveaux d'interet par les problèmes  environnementaux") +
+  xlab("IPE") +
+  ylab("Fréquence") +
+  scale_x_discrete(labels = c("1", "2", "3", "4", "5")) +
+  theme_minimal() +
+  geom_text(aes(label = paste(round((..count..)/sum(..count..)*100), "%"), y = ((..count..)/sum(..count..))), stat = "count", vjust = -1) 
+```
+```{r}
+library(ggplot2) # Chargement de la bibliothèque "ggplot2" pour créer le graphique
+# Calcul de la répartition de la variable "ice"
+prop <- prop.table(table(df$ice)) * 100
+# Création du graphique en barres avec pourcentages dans les barres et couleurs personnalisées
+ggplot(data = df, aes(x = factor(ice))) + 
+  geom_bar(aes(y = (..count..)/sum(..count..), fill = factor(ice)), stat="count") +
+  scale_fill_manual(values = c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2")) +
+  ggtitle("Le niveaux d'interet  par la gestion durable de l'eau et la réduction de la consommation d'eau") +
+  xlab("ICE") +
+  ylab("Fréquence") +
+  scale_x_discrete(labels = c("1", "2", "3", "4", "5")) +
+  theme_minimal() +
+  geom_text(aes(label = paste(round((..count..)/sum(..count..)*100), "%"), y = ((..count..)/sum(..count..))), stat = "count", vjust = -1) 
+```
+#ACP
+## Interet de l'acp
+-Intérêt pour les individus : L'ACP peut permettre de regrouper les individus qui ont des réponses similaires sur l'échelle de Likert en termes de leur sensibilité écologique. Par exemple, l'ACP peut révéler que certains individus ont une sensibilité écologique élevée en raison de facteurs tels que leur âge, leur éducation, leur lieu de résidence, leur exposition aux médias, etc. Cette information peut être utile pour comprendre les motivations et les attitudes des personnes ayant une sensibilité écologique élevée, ainsi que pour cibler les campagnes de sensibilisation et de communication.
+
+-Intérêt pour les variables : L'ACP peut également permettre de réduire la dimensionnalité des données en identifiant les variables les plus importantes qui contribuent à la variance totale des réponses sur l'échelle de Likert. Par exemple, l'ACP peut révéler que certaines questions de l'échelle de Likert sont corrélées entre elles et peuvent être regroupées en composantes principales. Cela peut aider à simplifier l'analyse des données en réduisant le nombre de variables à considérer, tout en permettant d'identifier les questions les plus importantes pour comprendre la sensibilité écologique des individus.
+
+En résumé, l'ACP peut être utile pour différencier entre les intérêts pour les individus et les intérêts pour les variables dans le cas d'un bloc de l'échelle de Likert sur la sensibilité écologique des gens, en permettant de regrouper les individus ayant des réponses similaires et en identifiant les variables les plus importantes pour comprendre la sensibilité écologique des individus.
+
+```{r}
+# Chargement de la bibliothèque "FactoMineR" pour réaliser l'ACP
+library(FactoMineR)
+# Réalisation de l'ACP
+res.pca <- PCA(df[, 5:23], graph = FALSE, ncp = min(nrow(df) - 1, ncol(df) - 3))
+```
+## Corrplot 
+
+Le corrgram donné ci-dessous permet d'étudier les corrélations entre les variables quantitatives : il est clair qu'il existe des corrélations importantes entre des groupes de variables ce qui suggère la pertinence de cette ACP (par exemple SE2,SE19 et SE17).
+```{r}
+library(corrplot)
+X=as.matrix(df[,c(5:23)])
+M<-cor(X)
+library(RColorBrewer)
+corrplot(M, type="upper", order="hclust", 
+         col=brewer.pal(n=8, name="RdBu"))
+```
+
+
+## Execution de la fct pca
+
+```{r}
+library(FactoMineR)
+library(factoextra)
+library(psych)
+# Sélectionner les variables quantitatives
+df_quant <- df[, 5:23]
+# Vérifier la présence de valeurs manquantes et les supprimer si nécessaire
+sum(is.na(df_quant))
+df_quant <- na.omit(df_quant)
+# Visualiser les résultats avec la nouvelle rotation
+fviz_pca_var(res.pca, col.var = "contrib", gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"), repel =TRUE, axes = c(1, 2), choose.vars = list(contrib = 5)) 
+```
+
+
+## Choix du nombre d'axe
+Trois critères devront être utlisés : taux d'inertie cumulé, critère de Kaiser et critère du coude.
+
+```{r}
+head(res.pca$eig)
+```
+
+```{r , echo=TRUE}
+head(res.pca$eig)
+fviz_screeplot(res.pca, ncp=55)
+```
+
+
+a)	Critère de kaiser : on remarque qu’il y a 4 axes dont les valeurs propres sont supérieures à 1 donc on retient 4 axes d’après ce critère.
+
+b)	Critère du taux d’inertie cumulée :
+On remarque que le taux d’inertie cumulé des 2 premiers axes est de 59.11% qui est un taux important compte tenu du fait que nous avons 19 variables : on va donc, d’après ce critère, retenir les 3 premiers axes. 
+(Remarquons que retenir 4 axes pour un taux d'inertie de 71.61% est envisageable aussi).
+
+c)	Critère du coude : On remarque que le coude se trouve au niveau du deuxieme axe (voir la figure Scree plot), d’après ce critère, on devrait retenir les 2 premiers axes.
+ 
+En faisant une sorte de vote des 3 critères on devrait  retenir les 2 premiers axes.
+
+## Interpretation de la carte des variables 
+
+```{r}
+library("corrplot")
+corrplot(res.pca$var$cos2, is.corr=FALSE)
+```
+
+les variables SE1, SE3, SE4, SE5, SE7, SE12, SE13, SE17, SE18 et SE19 ont des valeurs de cos² élevées sur la première dimension de l'ACP, ce qui signifie qu'elles sont bien représentées sur cette dimension et qu'elles contribuent fortement à la variance totale de l'ensemble de données.
+En revanche, les autres variables ont des valeurs de cosinus carré plus faibles sur la première dimension, ce qui signifie qu'elles sont moins bien représentées et qu'elles ont une contribution moindre à la variance totale.
+
+# Contributions des variables aux axes principaux
+## bar plot du cosinus carré des variables 
+
+```{r}
+# Cos2 total des variables sur Dim.1 et Dim.2
+fviz_cos2(res.pca, choice = "var", axes = 1:2)
+```
+Le bar plot du cos² des variables (fviz_cos2()) permet d'évaluer l'importance de chaque variable sur chaque dimension de l'ACP. Les variables ayant les plus grandes barres ont une contribution plus importante à la construction de la dimension respective. Dans votre cas, les variables SE3, SE1, SE5, SE4, SE7, SE17 et SE18 ont les barres les plus grandes, ce qui signifie qu'elles ont une forte influence sur la construction des dimensions correspondantes. En revanche, la variable SE2 a la plus faible barre, ce qui signifie qu'elle a une faible influence sur la construction des dimensions correspondantes. En interprétant ces résultats, on peut conclure que les répondants sont plus sensibles à l'aspect financier de l'écologie (SE5) que l'aspect éducatif (SE17) ou la nécessité d'avoir des réflexes écologiques au quotidien (SE2).
+```{r}
+fviz_contrib(res.pca, choice = "var", axes = 1, top = 14)
+```
+la ligne en pointillé rouge, sur le graphique ci-dessus, indique la contribution moyenne attendue. Si la contribution des variables était uniforme, la valeur attendue serait 1/length(variables) = 1/5 = 5%. Pour une composante donnée, une variable avec une contribution supérieure à ce seuil pourrait être considérée
+les variables SE3 SE1 SE5 SE4 SE18 SE7 SE19 SE12 SE13 SE17  sont les plus pertinentes l'axe 1
+```{r}
+fviz_contrib(res.pca, choice = "var", axes = 2, top = 14)
+```
+les variables SE14 SE8 SE16 SE11 SE15 SE10 SE17  sont les plus pertinentes l'axe2
+
+# Description des dimensions
+
+```{r}
+res.desc <- dimdesc(res.pca, axes = c(1,2), proba = 0.05)
+# Description de la dimension 1
+res.desc$Dim.1
+```
+SE3, SE1 et SE5 ont les corrélations les plus fortes avec l'axe1, ce qui suggère qu'ils sont fortement liées à la mesure globale de la personnalité. SE4 et SE18 ont également une forte corrélation avec la mesure globale de personnalité. SE7, SE12, SE13 et SE17 ont des corrélations modérées avec la mesure globale de personnalité.
+
+SE6, SE9, SE8, SE16, SE2, SE11, SE15, SE14 et SE10 ont des corrélations plus faibles avec la mesure globale de personnalité
+```{r}
+# Description de la dimension 2
+res.desc$Dim.2
+```
+Ces résultats indiquent les corrélations entre les variables de la dimension 2 et les variables SE1-SE17, ainsi que la significativité de ces corrélations (mesurée par la valeur de p). Les variables SE14, SE8, SE16, SE11, SE15 et SE10 sont positivement corrélées avec la dimension 2, tandis que les variables SE6, SE12, SE5, SE3, SE1, SE7, SE4 et SE17 sont négativement corrélées avec la dimension 2. Les valeurs de p sont faibles pour toutes les corrélations, ce qui indique une forte significativité.
+
+```{r}
+fviz_pca_var(res.pca)
+fviz_pca_var(res.pca, col.var="cos2", repel = TRUE) +
+  scale_color_gradient2(low="white", mid="blue", 
+                        high="red", midpoint=0.6) + 
+  theme_minimal()
+```
+
+-axe1:en se basant sur les résultats de dim1, on peut nommer l'axe correspondant "Sensibilité écologique personnelle", qui exprime la sensibilité de chaque individu à l'égard de l'écologie et de l'environnement. Les items les plus corrélés avec cet axe sont SE3, SE1, SE5, SE4, SE18 et SE7, qui expriment l'importance de l'écologie pour le bien-être sanitaire, pour les campagnes de sensibilisation, pour l'aspect financier, pour la préservation de l'environnement, pour l'effort conscient à l'avenir et pour l'investissement personnel dans l'écologie.
+
+-axe2:en se basant sur les résultats de dim2, on peut nommer l'axe correspondant "Comportements écologiques au quotidien", qui exprime l'importance des comportements et habitudes écologiques dans la vie quotidienne de chaque individu. Les items les plus corrélés avec cet axe sont SE10, SE11, SE12, SE13, SE14, SE15 et SE16, qui expriment l'utilisation de produits durables, l'extinction des lumières, la réduction du gaspillage alimentaire, la minimisation de l'empreinte carbone, la participation à des initiatives environnementales, l'évitement des produits nocifs pour l'environnement et la nécessité d'une intervention gouvernementale pour la protection de l'environnement.
+
+# Interprétation de la carte des individus
+
+```{r}
+fviz_pca_ind (res.pca, col.ind = "cos2",
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+             repel = TRUE # Évite le chevauchement de texte
+             )
+```
+-les individus qui sont proches les uns des autres sur la carte sont similaires en termes de leurs réponses aux variables étudiées, tandis que ceux qui sont éloignés les uns des autres sont différents.
+
+-Les individus qui sont proches de l'origine sont moins influents sur la variance totale des données, tandis que ceux qui sont éloignés sont plus influents.
+
+-les individus qui sont proches de l'axe ont une corrélation plus forte avec celui-ci que les individus qui sont éloignés. En d'autres termes, les individus qui sont situés sur l'axe ont une contribution plus importante à l'axe que ceux qui sont situés en périphérie.
+
+-Ainsi, pour identifier les individus les plus corrélés à un axe spécifique, il faut chercher ceux qui sont situés le plus près de l'axe et qui sont également éloignés de l'origine de la carte. Ces individus ont une contribution importante à l'axe et peuvent être considérés comme des représentants typiques de la dimension qu'il représente.
+
+```{r}
+library(FactoMineR)
+library(factoextra)
+# Sélectionner les variables quantitatives de la colonne 5 à la colonne 23
+df_quant <- df[, 5:23]
+# Effectuer l'ACP
+res.pca <- PCA(df_quant, graph = FALSE, ncp = 18)
+# Visualiser les résultats de l'ACP
+fviz_pca_var(res.pca, col.var = "contrib",
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+             repel = TRUE)
+fviz_pca_biplot(res.pca, col.var = "cos2",
+                gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+                repel = TRUE)
+
+```
+
+# Classification Hiérarchique
+
+```{r}
+library(cluster)                  
+library(factoextra)
+library(FactoMineR)
+res.pca <- PCA(df[,5:23], ncp = 18, graph = FALSE)
+res.hcpc <- HCPC(res.pca, graph = FALSE)
+fviz_dend(res.hcpc, 
+          cex = 0.7,                     # Taille du text
+          palette = "jco",               # Palette de couleur ?ggpubr::ggpar
+          rect = TRUE, rect_fill = TRUE, # Rectangle autour des groupes
+          rect_border = "jco",           # Couleur du rectangle
+          labels_track_height = 0.8      # Augment l'espace pour le texte
+          )    
+
+```
+```{r}
+fviz_cluster(res.hcpc,
+             repel = TRUE,            # Evite le chevauchement des textes
+             show.clust.cent = TRUE, # Montre le centre des clusters
+             palette = "jco",         # Palette de couleurs, voir ?ggpubr::ggpar
+             ggtheme = theme_minimal(),
+             main = "Factor map"
+             )
+
+```
+
+-Cluster 1: Les individus de ce groupe ont une sensibilité écologique élevée en ce qui concerne la préservation de l'environnement et le bien-être sanitaire. Ils sont également conscients de l'impact de l'écologie sur leur orientation politique et leur participation à des initiatives environnementales. Cependant, leur engagement pour l'écologie n'est pas nécessairement traduit par des actions concrètes, telles que l'utilisation régulière de produits durables ou la prise de mesures pour minimiser leur empreinte carbone.
+
+-Cluster 2: Les individus de ce groupe ont une sensibilité écologique élevée en ce qui concerne la dimension politique de l'écologie, notamment en croyant que les gouvernements doivent prendre des mesures pour protéger l'environnement et que l'éducation à l'environnement est importante pour les futures générations. Ils sont également plus enclins à faire un effort conscient pour être plus écologique à l'avenir. Cependant, leur sensibilité écologique est moins orientée vers les aspects pratiques, tels que l'utilisation de produits durables ou la minimisation de leur empreinte carbone.
+
+-Cluster 3: Les individus de ce groupe ont une sensibilité écologique élevée en ce qui concerne l'utilisation de produits durables et la minimisation de leur empreinte carbone. Ils ont également tendance à prendre des mesures pour éviter le gaspillage alimentaire et pour éviter les produits contenant des ingrédients nocifs pour l'environnement. Cependant, leur sensibilité écologique est moins orientée vers la dimension politique et la participation à des initiatives environnementales.
+
+# Conclusion 
+
+En conclusion, l'analyse des données du questionnaire sur la consommation de l'eau et l'écologie à l'aide des techniques statistiques telles que l'ACP, la CAH et l'ACF a permis de mieux comprendre les comportements des individus en matière de consommation d'eau et leur impact sur l'environnement. Les résultats ont montré l'importance de sensibiliser les individus à la nécessité de réduire leur consommation d'eau pour protéger l'environnement, ainsi que la pertinence de mettre en place des stratégies de gestion de l'eau plus durables. En utilisant ces techniques statistiques, il est possible de mieux comprendre les habitudes de consommation d'eau et de développer des politiques plus efficaces pour encourager la conservation de l'eau et préserver l'environnement pour les générations futures.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
